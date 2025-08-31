@@ -1,0 +1,16 @@
+Status Code,Status Name,Purpose,Usage Example
+200,OK,Request successful - General success response,GET /api/items - Items retrieved successfully
+201,Created,Resource created successfully,POST /api/items - Item created successfully
+202,Accepted,Request accepted for processing,POST /api/items/report - Report submitted for review
+204,No Content,Request successful but no content to return,DELETE /api/items/1 - Item deleted successfully
+400,Bad Request,Invalid request - Missing fields or invalid data format,Missing required fields like title or location
+401,Unauthorized,Authentication required - Missing or invalid JWT token,Login required to access protected routes
+403,Forbidden,Access denied - User doesn't have permission,User trying to access other user's private items
+404,Not Found,Resource not found,Item/User/Category doesn't exist in database
+409,Conflict,Resource conflict - Duplicate data,Email already exists during user registration
+422,Unprocessable Entity,Request format correct but contains semantic errors,Valid JSON but business logic validation failed
+429,Too Many Requests,Rate limit exceeded - Too many requests from client,Too many login attempts from same IP
+500,Internal Server Error,Server error - Database connection issues,Database connection failed or query error
+501,Not Implemented,Feature not implemented - Endpoint exists but not ready,Advanced search features not yet implemented
+502,Bad Gateway,External service unavailable,Image upload service or email service down
+503,Service Unavailable,Server temporarily overloaded or down,Server maintenance mode or high traffic
