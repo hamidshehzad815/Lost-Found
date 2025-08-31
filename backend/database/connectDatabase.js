@@ -10,7 +10,7 @@ const connection = new Sequelize(process.env.DB_URI, {
   dialectOptions: {
     ssl: {
       require: true,
-      rejectUnauthorized: false, // important for Render SSL
+      rejectUnauthorized: false,
     },
   },
 });
