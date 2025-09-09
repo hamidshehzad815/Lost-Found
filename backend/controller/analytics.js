@@ -1,6 +1,3 @@
-
-
-
 import {
   ItemAnalytics,
   Item,
@@ -10,11 +7,10 @@ import {
 } from "../models/Index.js";
 import { Op } from "sequelize";
 
-
 const trackItemView = async (req, res) => {
   try {
     const { item_id } = req.params;
-    const userId = req.user?.id || null; 
+    const userId = req.user?.user_id || null;
     const {
       user_agent,
       ip_address,
@@ -23,7 +19,60 @@ const trackItemView = async (req, res) => {
       location,
     } = req.body;
 
-    
+    // Get the item to check ownership
+    const item = await Item.findByPk(item_id);
+    if (!item) {
+      return res.status(404).json({
+        success: false,
+        message: "Item not found",
+      });
+    }
+
+    // Don't track views from the item owner
+    if (userId && userId === item.user_id) {
+      return res.status(200).json({
+        success: true,
+        message: "Owner view not tracked",
+      });
+    }
+
+    // Check if this user has already viewed this item
+    if (userId) {
+      // For logged-in users, check by user_id
+      const existingView = await ItemAnalytics.findOne({
+        where: {
+          item_id,
+          user_id: userId,
+          action_type: "view",
+        },
+      });
+
+      if (existingView) {
+        return res.status(200).json({
+          success: true,
+          message: "View already tracked for this user",
+        });
+      }
+    } else {
+      // For anonymous users, check by IP address
+      const clientIp = ip_address || req.ip;
+      const existingView = await ItemAnalytics.findOne({
+        where: {
+          item_id,
+          user_id: null,
+          ip_address: clientIp,
+          action_type: "view",
+        },
+      });
+
+      if (existingView) {
+        return res.status(200).json({
+          success: true,
+          message: "View already tracked for this IP address",
+        });
+      }
+    }
+
     await ItemAnalytics.create({
       item_id,
       user_id: userId,
@@ -48,7 +97,6 @@ const trackItemView = async (req, res) => {
     });
   }
 };
-
 
 const trackItemInteraction = async (req, res) => {
   try {
@@ -94,14 +142,12 @@ const trackItemInteraction = async (req, res) => {
   }
 };
 
-
 const getItemAnalytics = async (req, res) => {
   try {
     const { item_id } = req.params;
     const { days = 30 } = req.query;
     const userId = req.user.id;
 
-    
     const item = await Item.findOne({
       where: {
         id: item_id,
@@ -119,7 +165,6 @@ const getItemAnalytics = async (req, res) => {
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - parseInt(days));
 
-    
     const analytics = await ItemAnalytics.findAll({
       attributes: [
         "action_type",
@@ -145,7 +190,6 @@ const getItemAnalytics = async (req, res) => {
       raw: true,
     });
 
-    
     const summaryData = await ItemAnalytics.findAll({
       attributes: [
         [sequelize.fn("COUNT", "*"), "total_events"],
@@ -192,7 +236,6 @@ const getItemAnalytics = async (req, res) => {
       shares: 0,
     };
 
-    
     const devices = await ItemAnalytics.findAll({
       attributes: ["device_type", [sequelize.fn("COUNT", "*"), "count"]],
       where: {
@@ -231,7 +274,6 @@ const getItemAnalytics = async (req, res) => {
   }
 };
 
-
 const getUserDashboard = async (req, res) => {
   try {
     const userId = req.user.user_id;
@@ -240,13 +282,11 @@ const getUserDashboard = async (req, res) => {
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - parseInt(days));
 
-    
     const userItems = await Item.findAll({
       where: { user_id: userId },
       attributes: ["item_id", "status"],
     });
 
-    
     const itemsStatsByStatus = {};
     for (const item of userItems) {
       if (!itemsStatsByStatus[item.status]) {
@@ -255,7 +295,6 @@ const getUserDashboard = async (req, res) => {
       itemsStatsByStatus[item.status].count++;
     }
 
-    
     const interactionCounts = await ItemAnalytics.count({
       where: {
         item_id: { [Op.in]: userItems.map((item) => item.item_id) },
@@ -264,14 +303,12 @@ const getUserDashboard = async (req, res) => {
       group: ["item_id"],
     });
 
-    
     const itemsStats = Object.keys(itemsStatsByStatus).map((status) => ({
       status,
       count: itemsStatsByStatus[status].count,
-      total_interactions: 0, 
+      total_interactions: 0,
     }));
 
-    
     const recentActivity = await ItemAnalytics.findAll({
       where: {
         createdAt: { [Op.gte]: startDate },
@@ -292,7 +329,6 @@ const getUserDashboard = async (req, res) => {
       limit: 20,
     });
 
-    
     const trendingItems = await Item.findAll({
       where: {
         user_id: userId,
@@ -302,9 +338,23 @@ const getUserDashboard = async (req, res) => {
       attributes: ["item_id", "title", "status", "created_at"],
     });
 
-    
+    // Add view counts to trending items
+    const trendingItemsWithViews = await Promise.all(
+      trendingItems.map(async (item) => {
+        const viewCount = await ItemAnalytics.count({
+          where: {
+            item_id: item.item_id,
+            action_type: "view",
+          },
+        });
+        return {
+          ...item.toJSON(),
+          views: viewCount,
+        };
+      })
+    );
+
     const performanceData = await Promise.all([
-      
       ItemAnalytics.count({
         distinct: true,
         col: "user_id",
@@ -319,7 +369,7 @@ const getUserDashboard = async (req, res) => {
           createdAt: { [Op.gte]: startDate },
         },
       }),
-      
+
       ItemAnalytics.count({
         include: [
           {
@@ -333,7 +383,7 @@ const getUserDashboard = async (req, res) => {
           createdAt: { [Op.gte]: startDate },
         },
       }),
-      
+
       ItemAnalytics.findAll({
         attributes: [
           [
@@ -359,12 +409,27 @@ const getUserDashboard = async (req, res) => {
         },
         raw: true,
       }),
+
+      ItemAnalytics.count({
+        include: [
+          {
+            model: Item,
+            where: { user_id: userId },
+            attributes: [],
+          },
+        ],
+        where: {
+          action_type: "view",
+          createdAt: { [Op.gte]: startDate },
+        },
+      }),
     ]);
 
     const performanceResult = {
       unique_viewers: performanceData[0] || 0,
       contact_rate: performanceData[1] || 0,
       active_days: performanceData[2][0]?.active_days || 0,
+      view_count: performanceData[3] || 0,
     };
 
     res.status(200).json({
@@ -374,7 +439,7 @@ const getUserDashboard = async (req, res) => {
         period: `${days} days`,
         items_by_status: itemsStats,
         recent_activity: recentActivity,
-        trending_items: trendingItems,
+        trending_items: trendingItemsWithViews,
         performance_metrics: performanceResult,
       },
     });
@@ -388,7 +453,6 @@ const getUserDashboard = async (req, res) => {
   }
 };
 
-
 const getAdminDashboard = async (req, res) => {
   try {
     const { days = 30 } = req.query;
@@ -396,7 +460,6 @@ const getAdminDashboard = async (req, res) => {
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - parseInt(days));
 
-    
     const [
       totalActiveUsers,
       totalItems,
@@ -424,7 +487,6 @@ const getAdminDashboard = async (req, res) => {
       },
     ];
 
-    
     const dailyActivity = await ItemAnalytics.findAll({
       attributes: [
         [sequelize.fn("DATE", sequelize.col("createdAt")), "date"],
@@ -445,7 +507,6 @@ const getAdminDashboard = async (req, res) => {
       raw: true,
     });
 
-    
     const mostActiveUsers = await User.findAll({
       attributes: [
         "name",
@@ -469,7 +530,6 @@ const getAdminDashboard = async (req, res) => {
       raw: true,
     });
 
-    
     const popularCategories = await Category.findAll({
       attributes: [
         ["name", "category_name"],
@@ -509,14 +569,12 @@ const getAdminDashboard = async (req, res) => {
   }
 };
 
-
 const getPlatformAnalytics = async (req, res) => {
   try {
     const { days = 30 } = req.query;
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - parseInt(days));
 
-    
     const [
       totalUsers,
       totalItems,
@@ -552,7 +610,6 @@ const getPlatformAnalytics = async (req, res) => {
       },
     ];
 
-    
     const categoryStats = await Category.findAll({
       attributes: [
         "name",
@@ -570,7 +627,6 @@ const getPlatformAnalytics = async (req, res) => {
       raw: true,
     });
 
-    
     const dailyActivity = await ItemAnalytics.findAll({
       attributes: ["action_type", [sequelize.fn("COUNT", "*"), "count"]],
       group: ["action_type"],
@@ -597,7 +653,6 @@ const getPlatformAnalytics = async (req, res) => {
     });
   }
 };
-
 
 const getPopularItems = async (req, res) => {
   try {

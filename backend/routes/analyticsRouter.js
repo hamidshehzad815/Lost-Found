@@ -11,7 +11,7 @@ import {
 
 const router = express.Router();
 
-router.post("/track/view/:item_id", trackItemView);
+router.post("/track/view/:item_id", auth, trackItemView);
 
 router.post("/track/interaction/:item_id", auth, trackItemInteraction);
 

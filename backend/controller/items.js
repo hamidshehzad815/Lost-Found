@@ -6,30 +6,27 @@ import {
   Conversation,
   UserReview,
   Tag,
+  ItemAnalytics,
   sequelize,
 } from "../models/Index.js";
 import { dmsToDecimal, decimalToDms } from "../utils/dmsConverter.js";
 import { Op } from "sequelize";
 import fs from "fs";
 
-
 const VALID_STATUSES = ["lost", "found", "returned"];
-
 
 const isValidStatus = (status) => {
   return VALID_STATUSES.includes(status);
 };
 
-
 const getValidStatusTransitions = (currentStatus) => {
   const transitions = {
-    lost: ["found"], 
-    found: ["returned"], 
-    returned: [], 
+    lost: ["found"],
+    found: ["returned"],
+    returned: [],
   };
   return transitions[currentStatus] || [];
 };
-
 
 const canTransitionStatus = (fromStatus, toStatus) => {
   const validTransitions = getValidStatusTransitions(fromStatus);
@@ -66,7 +63,7 @@ const uploadItem = async (req, res) => {
       contactInfo,
       reward,
       isEmergency,
-      
+
       categoryName,
       lost_date,
       found_date,
@@ -77,16 +74,14 @@ const uploadItem = async (req, res) => {
       expiry_date,
     } = req.body;
 
-    
     const finalCategoryId = categoryId || null;
     const finalCategoryName = categoryName || null;
     const finalAddress = location || address;
     const finalContactInfo = contactInfo || contact_info;
-    const finalReward = reward || 0; 
+    const finalReward = reward || 0;
     const finalIsSensitive = isEmergency || is_sensitive;
-    const finalStatus = status || "lost"; 
+    const finalStatus = status || "lost";
 
-    
     let finalDate = null;
     if (lastSeenDate) {
       const dateTime = lastSeenTime
@@ -99,7 +94,6 @@ const uploadItem = async (req, res) => {
       finalDate = new Date(found_date);
     }
 
-    
     if (!title || !description || !finalAddress) {
       await transaction.rollback();
       return res.status(400).send({
@@ -107,7 +101,6 @@ const uploadItem = async (req, res) => {
       });
     }
 
-    
     if (!isValidStatus(finalStatus)) {
       await transaction.rollback();
       return res.status(400).send({
@@ -115,11 +108,9 @@ const uploadItem = async (req, res) => {
       });
     }
 
-    
     longitude = parseFloat(longitude);
     latitude = parseFloat(latitude);
 
-    
     if (req.files && req.files.length > 5) {
       await transaction.rollback();
       return res.status(400).send({ message: "Maximum 5 images allowed" });
@@ -127,14 +118,12 @@ const uploadItem = async (req, res) => {
 
     const email = req.user.email;
 
-    
     const user = await User.findOne({ where: { email } });
     if (!user) {
       await transaction.rollback();
       return res.status(404).send({ message: "User not found" });
     }
 
-    
     let category;
     if (finalCategoryId) {
       category = await Category.findByPk(finalCategoryId);
@@ -151,7 +140,6 @@ const uploadItem = async (req, res) => {
       });
     }
 
-    
     const itemData = {
       title,
       description,
@@ -163,23 +151,15 @@ const uploadItem = async (req, res) => {
       category_id: category.category_id,
     };
 
-    
-    
-    
-    
-    
-
-    
     const newItem = await Item.create(itemData, { transaction });
 
-    
     let createdImages = [];
     if (req.files && req.files.length > 0) {
       const imagePromises = req.files.map((file) =>
         Image.create(
           {
             image_url: file.filename,
-            item_id: newItem.item_id, 
+            item_id: newItem.item_id,
           },
           { transaction }
         )
@@ -187,10 +167,8 @@ const uploadItem = async (req, res) => {
       createdImages = await Promise.all(imagePromises);
     }
 
-    
     await transaction.commit();
 
-    
     const itemWithImages = await Item.findByPk(newItem.item_id, {
       include: [
         {
@@ -214,14 +192,12 @@ const uploadItem = async (req, res) => {
       imagesUploaded: createdImages.length,
     });
   } catch (error) {
-    
     await transaction.rollback();
 
     console.error("❌ uploadItem error:", error);
     console.error("❌ Error message:", error.message);
     console.error("❌ Error stack:", error.stack);
 
-    
     if (req.files && req.files.length > 0) {
       req.files.forEach((file) => {
         const filePath = file.path;
@@ -254,12 +230,8 @@ const allItems = async (req, res) => {
 
     const whereConditions = {};
 
-    
     if (status) whereConditions.status = status;
     if (priority) whereConditions.priority = priority;
-
-    
-    
 
     const includeConditions = [
       {
@@ -276,7 +248,6 @@ const allItems = async (req, res) => {
       },
     ];
 
-    
     if (category) {
       includeConditions[2].where = { name: category.toLowerCase() };
     }
@@ -286,7 +257,7 @@ const allItems = async (req, res) => {
       include: includeConditions,
       limit: parseInt(limit),
       offset: parseInt(offset),
-      order: [["created_at", "DESC"]], 
+      order: [["created_at", "DESC"]],
     });
 
     console.log(`Found ${items.length} items in database`);
@@ -322,7 +293,13 @@ const itemByCategory = async (req, res) => {
   const items = await Item.findAll({
     where: { category_id: category.category_id },
     attributes: {
-      exclude: ["item_id", "user_id", "category_id", "createdAt", "updatedAt"],
+      exclude: [
+        "item_id",
+        "user_id",
+        "category_id",
+        "created_at",
+        "updated_at",
+      ],
     },
     include: [
       {
@@ -354,12 +331,10 @@ const itemByStatus = async (req, res) => {
   try {
     const { status } = req.body;
 
-    
     if (!status) {
       return res.status(400).send({ message: "Status is required" });
     }
 
-    
     if (!isValidStatus(status)) {
       return res.status(400).send({
         message: `Invalid status. Must be one of: ${VALID_STATUSES.join(", ")}`,
@@ -373,8 +348,8 @@ const itemByStatus = async (req, res) => {
           "item_id",
           "user_id",
           "category_id",
-          "createdAt",
-          "updatedAt",
+          "created_at",
+          "updated_at",
         ],
       },
       include: [
@@ -415,7 +390,6 @@ const updateStatus = async (req, res) => {
   try {
     const { item_id, status } = req.body;
 
-    
     if (!item_id) {
       return res.status(400).send({ message: "Item ID is required" });
     }
@@ -424,35 +398,23 @@ const updateStatus = async (req, res) => {
       return res.status(400).send({ message: "Status is required" });
     }
 
-    
     if (!isValidStatus(status)) {
       return res.status(400).send({
         message: `Invalid status. Must be one of: ${VALID_STATUSES.join(", ")}`,
       });
     }
 
-    
     const existingItem = await Item.findByPk(item_id);
     if (!existingItem) {
       return res.status(404).send({ message: "Item not found" });
     }
 
-    
     if (existingItem.status === status) {
       return res.status(400).send({
         message: `Item is already in '${status}' status`,
       });
     }
 
-    
-    
-    
-    
-    
-    
-    
-
-    
     const [affectedRows, [updatedItem]] = await Item.update(
       { status },
       { where: { item_id }, returning: true }
@@ -464,7 +426,6 @@ const updateStatus = async (req, res) => {
         .send({ message: "Item not found or no changes made" });
     }
 
-    
     const itemWithDetails = await Item.findByPk(updatedItem.item_id, {
       include: [
         {
@@ -518,14 +479,12 @@ const updateItem = async (req, res) => {
       expiry_date,
     } = req.body;
 
-    
     console.log("Received item_id:", item_id, "Type:", typeof item_id);
     if (!item_id) {
       await transaction.rollback();
       return res.status(400).send({ message: "Item ID is required" });
     }
 
-    
     console.log("Looking for item with ID:", item_id);
     const existingItem = await Item.findOne({
       where: { item_id },
@@ -543,7 +502,6 @@ const updateItem = async (req, res) => {
       return res.status(404).send({ message: "Item not found" });
     }
 
-    
     const userEmail = req.user.email;
     if (existingItem.User.email !== userEmail) {
       await transaction.rollback();
@@ -552,7 +510,6 @@ const updateItem = async (req, res) => {
         .send({ message: "You can only update your own items" });
     }
 
-    
     const updateData = {};
 
     if (title !== undefined) updateData.title = title;
@@ -567,7 +524,6 @@ const updateItem = async (req, res) => {
         is_sensitive === "true" || is_sensitive === true;
     if (priority !== undefined) updateData.priority = priority;
 
-    
     if (lost_date !== undefined)
       updateData.lost_date = lost_date ? new Date(lost_date) : null;
     if (found_date !== undefined)
@@ -577,14 +533,13 @@ const updateItem = async (req, res) => {
     if (expiry_date !== undefined)
       updateData.expiry_date = expiry_date ? new Date(expiry_date) : null;
 
-    
     if (latitude !== undefined && latitude !== "") {
       try {
         console.log("Converting latitude:", latitude);
         updateData.latitude = dmsToDecimal(latitude);
       } catch (coordError) {
         console.error("Error converting latitude:", coordError);
-        
+
         const numLat = parseFloat(latitude);
         if (!isNaN(numLat)) {
           updateData.latitude = numLat;
@@ -602,7 +557,7 @@ const updateItem = async (req, res) => {
         updateData.longitude = dmsToDecimal(longitude);
       } catch (coordError) {
         console.error("Error converting longitude:", coordError);
-        
+
         const numLon = parseFloat(longitude);
         if (!isNaN(numLon)) {
           updateData.longitude = numLon;
@@ -615,7 +570,6 @@ const updateItem = async (req, res) => {
       }
     }
 
-    
     if (categoryName !== undefined) {
       const category = await Category.findOne({
         where: { name: categoryName.toLowerCase() },
@@ -627,18 +581,15 @@ const updateItem = async (req, res) => {
       updateData.category_id = category.category_id;
     }
 
-    
     if (req.files && req.files.length > 0) {
-      
       const currentImageCount = await Image.count({
         where: { item_id },
         transaction,
       });
 
-      
       if (currentImageCount + req.files.length > 5) {
         await transaction.rollback();
-        
+
         req.files.forEach((file) => {
           if (fs.existsSync(file.path)) {
             fs.unlinkSync(file.path);
@@ -649,7 +600,6 @@ const updateItem = async (req, res) => {
         });
       }
 
-      
       const imagePromises = req.files.map((file) =>
         Image.create(
           {
@@ -662,7 +612,6 @@ const updateItem = async (req, res) => {
       await Promise.all(imagePromises);
     }
 
-    
     if (Object.keys(updateData).length > 0) {
       console.log("Updating item with data:", updateData);
       await Item.update(updateData, {
@@ -674,10 +623,8 @@ const updateItem = async (req, res) => {
       console.log("No fields to update in item data");
     }
 
-    
     await transaction.commit();
 
-    
     const updatedItem = await Item.findOne({
       where: { item_id },
       include: [
@@ -696,7 +643,6 @@ const updateItem = async (req, res) => {
       ],
     });
 
-    
     const itemData = updatedItem.toJSON();
     itemData.latitude = decimalToDms(itemData.latitude);
     itemData.longitude = decimalToDms(itemData.longitude, "lon");
@@ -706,10 +652,8 @@ const updateItem = async (req, res) => {
       item: itemData,
     });
   } catch (error) {
-    
     await transaction.rollback();
 
-    
     if (req.files && req.files.length > 0) {
       req.files.forEach((file) => {
         if (fs.existsSync(file.path)) {
@@ -763,10 +707,18 @@ const getItemById = async (req, res) => {
     return res.status(404).send({ message: "Item not found" });
   }
 
-  
+  // Get view count from ItemAnalytics
+  const viewCount = await ItemAnalytics.count({
+    where: {
+      item_id: item_id,
+      action_type: "view",
+    },
+  });
+
   const itemData = item.toJSON();
   itemData.latitude = decimalToDms(itemData.latitude);
   itemData.longitude = decimalToDms(itemData.longitude, "lon");
+  itemData.view_count = viewCount;
 
   return res.status(200).send({ item: itemData });
 };
@@ -774,7 +726,6 @@ const getItemById = async (req, res) => {
 const myItems = async (req, res) => {
   const email = req.user.email;
 
-  
   const user = await User.findOne({ where: { email } });
   if (!user) {
     return res.status(404).send({ message: "User not found" });
@@ -796,10 +747,9 @@ const myItems = async (req, res) => {
         attributes: ["name"],
       },
     ],
-    order: [["createdAt", "DESC"]], 
+    order: [["created_at", "DESC"]],
   });
 
-  
   const itemsWithDms = userItems.map((item) => {
     const itemData = item.toJSON();
     itemData.latitude = decimalToDms(itemData.latitude);
@@ -813,7 +763,6 @@ const myItems = async (req, res) => {
     items: itemsWithDms,
   });
 };
-
 
 const getStatusInfo = async (req, res) => {
   try {
@@ -844,10 +793,8 @@ const getStatusInfo = async (req, res) => {
   }
 };
 
-
 const getHomepageStats = async (req, res) => {
   try {
-    
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
@@ -910,10 +857,8 @@ const getHomepageStats = async (req, res) => {
       },
     ];
 
-    
     const data = stats[0];
 
-    
     const itemsFound = await Item.count({ where: { status: "found" } });
     const itemsLost = await Item.count({ where: { status: "lost" } });
 
@@ -922,7 +867,6 @@ const getHomepageStats = async (req, res) => {
         ? Math.round((data.resolved_items / data.total_items) * 100)
         : 0;
 
-    
     const uniqueAddresses = await Item.count({
       distinct: true,
       col: "address",
@@ -934,13 +878,11 @@ const getHomepageStats = async (req, res) => {
     });
 
     const enhancedStats = {
-      
       itemsReunited: data.resolved_items,
       activeUsers: data.total_users,
       successRate,
       cities: uniqueAddresses || 1,
 
-      
       totalItems: data.total_items,
       itemsFound,
       itemsLost,
@@ -972,10 +914,8 @@ const getHomepageStats = async (req, res) => {
   }
 };
 
-
 const addSampleData = async (req, res) => {
   try {
-    
     const sampleUsers = await User.bulkCreate(
       [
         {
@@ -1000,7 +940,6 @@ const addSampleData = async (req, res) => {
       }
     );
 
-    
     const sampleCategories = await Category.bulkCreate(
       [
         { name: "electronics" },
@@ -1014,11 +953,9 @@ const addSampleData = async (req, res) => {
       }
     );
 
-    
     const users = await User.findAll({ limit: 3 });
     const categories = await Category.findAll({ limit: 4 });
 
-    
     const sampleItems = [
       {
         title: "iPhone 15 Pro",
