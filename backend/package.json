@@ -25,6 +25,7 @@
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
     "pg": "^8.16.3",
+    "request": "^2.88.2",
     "sequelize": "^6.37.7"
   },
   "type": "module"

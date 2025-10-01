@@ -1,0 +1,1720 @@
+LOST & FOUND API DOCUMENTATION
+================================
+
+BASE URL: http://localhost:4500
+
+================================================================================
+                           USER AUTHENTICATION APIS
+================================================================================
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                               USER REGISTRATION                               │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+API Name: User Registration
+URL: POST /users/register
+Request Body:
+{
+  "name": "John Doe",
+  "email": "john@example.com",
+  "password": "password123",
+  "phone": "+1234567890"
+}
+
+Success Response (201):
+{
+  "success": true,
+  "message": "User registered successfully! Please check your email for verification.",
+  "data": {
+    "user_id": 123,
+    "name": "John Doe",
+    "email": "john@example.com",
+    "phone": "+1234567890",
+    "is_verified": false,
+    "created_at": "2025-10-01T10:30:00Z"
+  }
+}
+
+Error Response (400):
+{
+  "success": false,
+  "message": "Email already exists"
+}
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                                 USER LOGIN                                    │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+API Name: User Login
+URL: POST /users/login
+Request Body:
+{
+  "email": "john@example.com",
+  "password": "password123"
+}
+
+Success Response (200):
+{
+  "success": true,
+  "message": "Login successful",
+  "data": {
+    "user": {
+      "user_id": 123,
+      "name": "John Doe",
+      "email": "john@example.com",
+      "phone": "+1234567890",
+      "is_verified": true,
+      "profile_picture_url": "https://example.com/profile.jpg"
+    },
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+  }
+}
+
+Error Response (401):
+{
+  "success": false,
+  "message": "Invalid email or password"
+}
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                               VERIFY EMAIL                                    │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+API Name: Verify Email
+URL: POST /users/verify-email
+Request Body:
+{
+  "token": "verification_token_here"
+}
+
+Success Response (200):
+{
+  "success": true,
+  "message": "Email verified successfully",
+  "data": {
+    "is_verified": true
+  }
+}
+
+Error Response (400):
+{
+  "success": false,
+  "message": "Invalid or expired verification token"
+}
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                              FORGOT PASSWORD                                  │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+API Name: Forgot Password
+URL: POST /users/forgot-password
+Request Body:
+{
+  "email": "john@example.com"
+}
+
+Success Response (200):
+{
+  "success": true,
+  "message": "Password reset link sent to your email"
+}
+
+Error Response (404):
+{
+  "success": false,
+  "message": "User not found with this email"
+}
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                               RESET PASSWORD                                  │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+API Name: Reset Password
+URL: POST /users/reset-password
+Request Body:
+{
+  "token": "reset_token_here",
+  "newPassword": "newpassword123"
+}
+
+Success Response (200):
+{
+  "success": true,
+  "message": "Password reset successfully"
+}
+
+Error Response (400):
+{
+  "success": false,
+  "message": "Invalid or expired reset token"
+}
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                             GET USER PROFILE                                  │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+API Name: Get User Profile
+URL: GET /users/profile
+Headers: Authorization: Bearer <jwt_token>
+Request Body: None
+
+Success Response (200):
+{
+  "success": true,
+  "data": {
+    "user_id": 123,
+    "name": "John Doe",
+    "email": "john@example.com",
+    "phone": "+1234567890",
+    "location": "New York, USA",
+    "profile_picture_url": "https://example.com/profile.jpg",
+    "is_verified": true,
+    "created_at": "2025-09-01T10:30:00Z",
+    "trust_score": 4.8,
+    "total_items": 15,
+    "successful_returns": 12
+  }
+}
+
+Error Response (401):
+{
+  "success": false,
+  "message": "Unauthorized - Invalid token"
+}
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                            UPDATE USER PROFILE                                │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+API Name: Update User Profile
+URL: PUT /users/profile
+Headers: Authorization: Bearer <jwt_token>
+Request Body:
+{
+  "name": "Updated Name",
+  "phone": "+1234567890",
+  "location": "City, Country"
+}
+
+Success Response (200):
+{
+  "success": true,
+  "message": "Profile updated successfully",
+  "data": {
+    "user_id": 123,
+    "name": "Updated Name",
+    "phone": "+1234567890",
+    "location": "City, Country",
+    "updated_at": "2025-10-01T15:30:00Z"
+  }
+}
+
+Error Response (400):
+{
+  "success": false,
+  "message": "Invalid input data"
+}
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                           UPLOAD PROFILE PICTURE                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+API Name: Upload Profile Picture
+URL: POST /users/upload-profile-picture
+Headers: 
+  - Authorization: Bearer <jwt_token>
+  - Content-Type: multipart/form-data
+Request Body: FormData with 'profilePicture' file field
+
+Success Response (200):
+{
+  "success": true,
+  "message": "Profile picture uploaded successfully",
+  "data": {
+    "profile_picture_url": "https://example.com/uploads/profile_123_timestamp.jpg"
+  }
+}
+
+Error Response (400):
+{
+  "success": false,
+  "message": "Invalid file format. Only JPG, PNG allowed"
+}
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                              CHANGE PASSWORD                                  │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+API Name: Change Password
+URL: POST /users/change-password
+Headers: Authorization: Bearer <jwt_token>
+Request Body:
+{
+  "currentPassword": "oldpassword",
+  "newPassword": "newpassword123"
+}
+
+Success Response (200):
+{
+  "success": true,
+  "message": "Password changed successfully"
+}
+
+Error Response (400):
+{
+  "success": false,
+  "message": "Current password is incorrect"
+}
+
+================================================================================
+                            ITEM MANAGEMENT APIS
+================================================================================
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                           CREATE ITEM (LOST/FOUND)                            │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+API Name: Create Item (Lost/Found)
+URL: POST /items
+Headers: Authorization: Bearer <jwt_token>
+Request Body:
+{
+  "title": "Lost iPhone 14",
+  "description": "Black iPhone 14 Pro lost near Central Park",
+  "category_id": 1,
+  "item_type": "lost",
+  "location": "Central Park, NYC",
+  "latitude": 40.7829,
+  "longitude": -73.9654,
+  "date_lost_found": "2025-10-01",
+  "tags": ["electronics", "phone", "black"]
+}
+
+Success Response (201):
+{
+  "success": true,
+  "message": "Item created successfully",
+  "data": {
+    "item_id": 456,
+    "title": "Lost iPhone 14",
+    "description": "Black iPhone 14 Pro lost near Central Park",
+    "category_id": 1,
+    "item_type": "lost",
+    "status": "active",
+    "location": "Central Park, NYC",
+    "latitude": 40.7829,
+    "longitude": -73.9654,
+    "date_lost_found": "2025-10-01",
+    "user_id": 123,
+    "created_at": "2025-10-01T10:30:00Z",
+    "tags": ["electronics", "phone", "black"]
+  }
+}
+
+Error Response (400):
+{
+  "success": false,
+  "message": "Title and description are required"
+}
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                              GET ALL ITEMS                                    │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+API Name: Get All Items
+URL: GET /items
+Query Parameters: 
+  - page (optional): Page number
+  - limit (optional): Items per page
+  - item_type (optional): "lost" or "found"
+  - category_id (optional): Category filter
+Request Body: None
+
+Success Response (200):
+{
+  "success": true,
+  "data": {
+    "items": [
+      {
+        "item_id": 456,
+        "title": "Lost iPhone 14",
+        "description": "Black iPhone 14 Pro lost near Central Park",
+        "category": {
+          "category_id": 1,
+          "name": "Electronics"
+        },
+        "item_type": "lost",
+        "status": "active",
+        "location": "Central Park, NYC",
+        "date_lost_found": "2025-10-01",
+        "user": {
+          "name": "John Doe",
+          "profile_picture_url": "https://example.com/profile.jpg"
+        },
+        "images": [
+          "https://example.com/uploads/item_456_1.jpg"
+        ],
+        "created_at": "2025-10-01T10:30:00Z"
+      }
+    ],
+    "pagination": {
+      "current_page": 1,
+      "total_pages": 5,
+      "total_items": 48,
+      "items_per_page": 10
+    }
+  }
+}
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                             GET ITEMS BY USER                                 │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+API Name: Get Items by User
+URL: GET /items/my-items
+Headers: Authorization: Bearer <jwt_token>
+Request Body: None
+
+Success Response (200):
+{
+  "success": true,
+  "data": {
+    "lost_items": [
+      {
+        "item_id": 456,
+        "title": "Lost iPhone 14",
+        "status": "active",
+        "date_lost_found": "2025-10-01",
+        "location": "Central Park, NYC",
+        "created_at": "2025-10-01T10:30:00Z"
+      }
+    ],
+    "found_items": [
+      {
+        "item_id": 789,
+        "title": "Found Wallet",
+        "status": "returned",
+        "date_lost_found": "2025-09-28",
+        "location": "Times Square, NYC",
+        "created_at": "2025-09-28T14:20:00Z"
+      }
+    ]
+  }
+}
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                              GET ITEM DETAILS                                 │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+API Name: Get Item Details
+URL: GET /items/:item_id
+Request Body: None
+
+Success Response (200):
+{
+  "success": true,
+  "data": {
+    "item_id": 456,
+    "title": "Lost iPhone 14",
+    "description": "Black iPhone 14 Pro lost near Central Park on October 1st around 3 PM. Has a blue case with initials JD.",
+    "category": {
+      "category_id": 1,
+      "name": "Electronics"
+    },
+    "item_type": "lost",
+    "status": "active",
+    "location": "Central Park, NYC",
+    "latitude": 40.7829,
+    "longitude": -73.9654,
+    "date_lost_found": "2025-10-01",
+    "user": {
+      "user_id": 123,
+      "name": "John Doe",
+      "profile_picture_url": "https://example.com/profile.jpg",
+      "trust_score": 4.8
+    },
+    "images": [
+      "https://example.com/uploads/item_456_1.jpg",
+      "https://example.com/uploads/item_456_2.jpg"
+    ],
+    "tags": ["electronics", "phone", "black", "iPhone"],
+    "created_at": "2025-10-01T10:30:00Z",
+    "updated_at": "2025-10-01T10:30:00Z",
+    "view_count": 25,
+    "contact_count": 3
+  }
+}
+
+Error Response (404):
+{
+  "success": false,
+  "message": "Item not found"
+}
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                               UPDATE ITEM                                     │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+API Name: Update Item
+URL: PUT /items/:item_id
+Headers: Authorization: Bearer <jwt_token>
+Request Body:
+{
+  "title": "Updated Title",
+  "description": "Updated description",
+  "status": "active",
+  "location": "Updated location"
+}
+
+Success Response (200):
+{
+  "success": true,
+  "message": "Item updated successfully",
+  "data": {
+    "item_id": 456,
+    "title": "Updated Title",
+    "description": "Updated description",
+    "status": "active",
+    "location": "Updated location",
+    "updated_at": "2025-10-01T15:30:00Z"
+  }
+}
+
+Error Response (403):
+{
+  "success": false,
+  "message": "Not authorized to update this item"
+}
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                            MARK ITEM AS RETURNED                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+API Name: Mark Item as Returned
+URL: POST /items/:item_id/mark-returned
+Headers: Authorization: Bearer <jwt_token>
+Request Body:
+{
+  "returned_to_user_id": 2,
+  "return_notes": "Item successfully returned to owner"
+}
+
+Success Response (200):
+{
+  "success": true,
+  "message": "Item marked as returned successfully",
+  "data": {
+    "item_id": 456,
+    "status": "returned",
+    "returned_to_user_id": 2,
+    "return_notes": "Item successfully returned to owner",
+    "return_date": "2025-10-01T16:30:00Z"
+  }
+}
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                             UPLOAD ITEM IMAGES                                │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+API Name: Upload Item Images
+URL: POST /items/:item_id/upload-images
+Headers: 
+  - Authorization: Bearer <jwt_token>
+  - Content-Type: multipart/form-data
+Request Body: FormData with 'images' file field (multiple files)
+
+Success Response (200):
+{
+  "success": true,
+  "message": "Images uploaded successfully",
+  "data": {
+    "uploaded_images": [
+      "https://example.com/uploads/item_456_3.jpg",
+      "https://example.com/uploads/item_456_4.jpg"
+    ]
+  }
+}
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                               DELETE ITEM                                     │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+API Name: Delete Item
+URL: DELETE /items/:item_id
+Headers: Authorization: Bearer <jwt_token>
+Request Body: None
+
+Success Response (200):
+{
+  "success": true,
+  "message": "Item deleted successfully"
+}
+
+Error Response (403):
+{
+  "success": false,
+  "message": "Not authorized to delete this item"
+}
+
+================================================================================
+                              MESSAGING APIS
+================================================================================
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                           GET USER CONVERSATIONS                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+API Name: Get User Conversations
+URL: GET /messaging/conversations
+Headers: Authorization: Bearer <jwt_token>
+Request Body: None
+
+Success Response (200):
+{
+  "success": true,
+  "data": [
+    {
+      "conversation_id": 789,
+      "item": {
+        "item_id": 456,
+        "title": "Lost iPhone 14",
+        "image_url": "https://example.com/uploads/item_456_1.jpg"
+      },
+      "other_user": {
+        "user_id": 321,
+        "name": "Jane Smith",
+        "profile_picture_url": "https://example.com/profile2.jpg"
+      },
+      "last_message": {
+        "message_text": "Is this still available?",
+        "created_at": "2025-10-01T14:30:00Z",
+        "sender_id": 321
+      },
+      "unread_count": 2,
+      "created_at": "2025-10-01T14:00:00Z"
+    }
+  ]
+}
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                          GET SPECIFIC CONVERSATION                            │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+API Name: Get Specific Conversation
+URL: GET /messaging/conversations/:conversation_id
+Headers: Authorization: Bearer <jwt_token>
+Request Body: None
+
+Success Response (200):
+{
+  "success": true,
+  "data": {
+    "conversation_id": 789,
+    "item": {
+      "item_id": 456,
+      "title": "Lost iPhone 14",
+      "item_type": "lost",
+      "status": "active"
+    },
+    "requester": {
+      "user_id": 321,
+      "name": "Jane Smith",
+      "profile_picture_url": "https://example.com/profile2.jpg"
+    },
+    "owner": {
+      "user_id": 123,
+      "name": "John Doe",
+      "profile_picture_url": "https://example.com/profile.jpg"
+    },
+    "created_at": "2025-10-01T14:00:00Z"
+  }
+}
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                          GET CONVERSATION MESSAGES                            │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+API Name: Get Conversation Messages
+URL: GET /messaging/conversations/:conversation_id/messages
+Headers: Authorization: Bearer <jwt_token>
+Request Body: None
+
+Success Response (200):
+{
+  "success": true,
+  "data": [
+    {
+      "message_id": 1001,
+      "conversation_id": 789,
+      "sender_id": 321,
+      "message_text": "Hi, is this iPhone still missing?",
+      "is_read": true,
+      "created_at": "2025-10-01T14:15:00Z"
+    },
+    {
+      "message_id": 1002,
+      "conversation_id": 789,
+      "sender_id": 123,
+      "message_text": "Yes, still looking for it. Do you have any information?",
+      "is_read": true,
+      "created_at": "2025-10-01T14:20:00Z"
+    }
+  ]
+}
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                           START NEW CONVERSATION                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+API Name: Start New Conversation
+URL: POST /messaging/conversations
+Headers: Authorization: Bearer <jwt_token>
+Request Body:
+{
+  "item_id": 123,
+  "owner_id": 456
+}
+
+Success Response (201):
+{
+  "success": true,
+  "message": "Conversation started successfully",
+  "data": {
+    "conversation_id": 789,
+    "item_id": 123,
+    "requester_id": 321,
+    "owner_id": 456,
+    "created_at": "2025-10-01T14:00:00Z"
+  }
+}
+
+Error Response (400):
+{
+  "success": false,
+  "message": "Conversation already exists between these users for this item"
+}
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                                SEND MESSAGE                                   │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+API Name: Send Message
+URL: POST /messaging/messages
+Headers: Authorization: Bearer <jwt_token>
+Request Body:
+{
+  "conversation_id": 789,
+  "message_text": "Hello, is this item still available?"
+}
+
+Success Response (201):
+{
+  "success": true,
+  "message": "Message sent successfully",
+  "data": {
+    "message_id": 1003,
+    "conversation_id": 789,
+    "sender_id": 321,
+    "message_text": "Hello, is this item still available?",
+    "is_read": false,
+    "created_at": "2025-10-01T15:30:00Z"
+  }
+}
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                            MARK MESSAGES AS READ                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+API Name: Mark Messages as Read
+URL: PUT /messaging/conversations/:conversation_id/mark-read
+Headers: Authorization: Bearer <jwt_token>
+Request Body: None
+
+Success Response (200):
+{
+  "success": true,
+  "message": "Messages marked as read",
+  "data": {
+    "marked_read_count": 3
+  }
+}
+
+================================================================================
+                                SEARCH APIS
+================================================================================
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                                SEARCH ITEMS                                   │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+API Name: Search Items
+URL: GET /search/items
+Query Parameters:
+  - q: Search query (string)
+  - category_id: Category filter (number)
+  - item_type: "lost" or "found"
+  - location: Location filter (string)
+  - radius: Search radius in km (number)
+  - date_from: Start date (YYYY-MM-DD)
+  - date_to: End date (YYYY-MM-DD)
+  - page: Page number (number)
+  - limit: Items per page (number)
+Request Body: None
+
+Success Response (200):
+{
+  "success": true,
+  "data": {
+    "items": [
+      {
+        "item_id": 456,
+        "title": "Lost iPhone 14",
+        "description": "Black iPhone 14 Pro lost near Central Park",
+        "item_type": "lost",
+        "location": "Central Park, NYC",
+        "distance": 2.5,
+        "relevance_score": 0.95,
+        "match_percentage": 85,
+        "user": {
+          "name": "John Doe",
+          "trust_score": 4.8
+        },
+        "created_at": "2025-10-01T10:30:00Z"
+      }
+    ],
+    "total_results": 12,
+    "search_time": "0.045s",
+    "pagination": {
+      "current_page": 1,
+      "total_pages": 2,
+      "items_per_page": 10
+    }
+  }
+}
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                          ADVANCED SEARCH WITH MATCHING                        │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+API Name: Advanced Search with Matching
+URL: POST /search/advanced
+Headers: Authorization: Bearer <jwt_token>
+Request Body:
+{
+  "query": "black phone",
+  "category_id": 1,
+  "item_type": "lost",
+  "location": "NYC",
+  "radius": 10,
+  "date_range": {
+    "from": "2025-09-01",
+    "to": "2025-10-01"
+  },
+  "use_ai_matching": true
+}
+
+Success Response (200):
+{
+  "success": true,
+  "data": {
+    "exact_matches": [
+      {
+        "item_id": 456,
+        "title": "Found Black Phone",
+        "match_score": 0.98,
+        "match_reasons": ["color match", "category match", "location proximity"]
+      }
+    ],
+    "potential_matches": [
+      {
+        "item_id": 789,
+        "title": "Found Dark Smartphone",
+        "match_score": 0.75,
+        "match_reasons": ["similar description", "same area"]
+      }
+    ],
+    "search_metadata": {
+      "total_exact": 1,
+      "total_potential": 3,
+      "search_time": "0.123s"
+    }
+  }
+}
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                             CREATE SEARCH ALERT                               │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+API Name: Create Search Alert
+URL: POST /search/alerts
+Headers: Authorization: Bearer <jwt_token>
+Request Body:
+{
+  "name": "iPhone Alert",
+  "query": "iPhone",
+  "category_id": 1,
+  "location": "NYC",
+  "radius": 5,
+  "notification_frequency": "daily"
+}
+
+Success Response (201):
+{
+  "success": true,
+  "message": "Search alert created successfully",
+  "data": {
+    "alert_id": 123,
+    "name": "iPhone Alert",
+    "query": "iPhone",
+    "is_active": true,
+    "created_at": "2025-10-01T16:00:00Z"
+  }
+}
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                            GET USER SEARCH ALERTS                             │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+API Name: Get User Search Alerts
+URL: GET /search/alerts
+Headers: Authorization: Bearer <jwt_token>
+Request Body: None
+
+Success Response (200):
+{
+  "success": true,
+  "data": [
+    {
+      "alert_id": 123,
+      "name": "iPhone Alert",
+      "query": "iPhone",
+      "category_id": 1,
+      "location": "NYC",
+      "radius": 5,
+      "notification_frequency": "daily",
+      "is_active": true,
+      "matches_found": 3,
+      "last_checked": "2025-10-01T12:00:00Z",
+      "created_at": "2025-09-28T10:00:00Z"
+    }
+  ]
+}
+
+================================================================================
+                             NOTIFICATIONS APIS
+================================================================================
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                           GET USER NOTIFICATIONS                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+API Name: Get User Notifications
+URL: GET /notifications
+Headers: Authorization: Bearer <jwt_token>
+Query Parameters:
+  - page: Page number (optional)
+  - limit: Items per page (optional)
+  - type: Notification type filter (optional)
+Request Body: None
+
+Success Response (200):
+{
+  "success": true,
+  "data": {
+    "notifications": [
+      {
+        "notification_id": 789,
+        "type": "new_message",
+        "title": "New Message",
+        "message": "You have a new message about your lost iPhone",
+        "data": {
+          "conversation_id": 456,
+          "item_id": 123
+        },
+        "is_read": false,
+        "created_at": "2025-10-01T14:30:00Z"
+      },
+      {
+        "notification_id": 790,
+        "type": "item_match",
+        "title": "Potential Match Found",
+        "message": "We found an item that might match your lost phone",
+        "data": {
+          "match_item_id": 654,
+          "your_item_id": 123,
+          "match_score": 0.85
+        },
+        "is_read": true,
+        "created_at": "2025-10-01T10:15:00Z"
+      }
+    ],
+    "unread_count": 3,
+    "pagination": {
+      "current_page": 1,
+      "total_pages": 2,
+      "total_items": 15
+    }
+  }
+}
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                         MARK NOTIFICATION AS READ                             │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+API Name: Mark Notification as Read
+URL: PUT /notifications/:notification_id/read
+Headers: Authorization: Bearer <jwt_token>
+Request Body: None
+
+Success Response (200):
+{
+  "success": true,
+  "message": "Notification marked as read"
+}
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                        MARK ALL NOTIFICATIONS AS READ                         │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+API Name: Mark All Notifications as Read
+URL: PUT /notifications/mark-all-read
+Headers: Authorization: Bearer <jwt_token>
+Request Body: None
+
+Success Response (200):
+{
+  "success": true,
+  "message": "All notifications marked as read",
+  "data": {
+    "marked_count": 5
+  }
+}
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                         GET NOTIFICATION SETTINGS                             │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+API Name: Get Notification Settings
+URL: GET /notifications/settings
+Headers: Authorization: Bearer <jwt_token>
+Request Body: None
+
+Success Response (200):
+{
+  "success": true,
+  "data": {
+    "email_notifications": true,
+    "push_notifications": false,
+    "sms_notifications": true,
+    "marketing_emails": false,
+    "new_messages": true,
+    "item_matches": true,
+    "search_alerts": true,
+    "system_updates": false
+  }
+}
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                        UPDATE NOTIFICATION SETTINGS                           │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+API Name: Update Notification Settings
+URL: PUT /notifications/settings
+Headers: Authorization: Bearer <jwt_token>
+Request Body:
+{
+  "email_notifications": true,
+  "push_notifications": false,
+  "sms_notifications": true,
+  "marketing_emails": false,
+  "new_messages": true,
+  "item_matches": true
+}
+
+Success Response (200):
+{
+  "success": true,
+  "message": "Notification settings updated successfully",
+  "data": {
+    "email_notifications": true,
+    "push_notifications": false,
+    "sms_notifications": true,
+    "marketing_emails": false,
+    "updated_at": "2025-10-01T16:45:00Z"
+  }
+}
+
+================================================================================
+                                REVIEWS APIS
+================================================================================
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                               CREATE REVIEW                                   │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+API Name: Create Review
+URL: POST /reviews
+Headers: Authorization: Bearer <jwt_token>
+Request Body:
+{
+  "reviewed_user_id": 456,
+  "item_id": 123,
+  "rating": 5,
+  "comment": "Very helpful and honest person!"
+}
+
+Success Response (201):
+{
+  "success": true,
+  "message": "Review created successfully",
+  "data": {
+    "review_id": 789,
+    "reviewer_id": 123,
+    "reviewed_user_id": 456,
+    "item_id": 123,
+    "rating": 5,
+    "comment": "Very helpful and honest person!",
+    "created_at": "2025-10-01T17:00:00Z"
+  }
+}
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                              GET USER REVIEWS                                 │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+API Name: Get User Reviews
+URL: GET /reviews/user/:user_id
+Request Body: None
+
+Success Response (200):
+{
+  "success": true,
+  "data": {
+    "user": {
+      "user_id": 456,
+      "name": "Jane Smith",
+      "average_rating": 4.7,
+      "total_reviews": 12
+    },
+    "reviews": [
+      {
+        "review_id": 789,
+        "reviewer": {
+          "user_id": 123,
+          "name": "John Doe",
+          "profile_picture_url": "https://example.com/profile.jpg"
+        },
+        "rating": 5,
+        "comment": "Very helpful and honest person!",
+        "item": {
+          "item_id": 123,
+          "title": "Lost Wallet"
+        },
+        "created_at": "2025-10-01T17:00:00Z"
+      }
+    ]
+  }
+}
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                              GET ITEM REVIEWS                                 │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+API Name: Get Item Reviews
+URL: GET /reviews/item/:item_id
+Request Body: None
+
+Success Response (200):
+{
+  "success": true,
+  "data": [
+    {
+      "review_id": 789,
+      "reviewer": {
+        "user_id": 123,
+        "name": "John Doe"
+      },
+      "reviewed_user": {
+        "user_id": 456,
+        "name": "Jane Smith"
+      },
+      "rating": 5,
+      "comment": "Item was exactly as described",
+      "created_at": "2025-10-01T17:00:00Z"
+    }
+  ]
+}
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                               UPDATE REVIEW                                   │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+API Name: Update Review
+URL: PUT /reviews/:review_id
+Headers: Authorization: Bearer <jwt_token>
+Request Body:
+{
+  "rating": 4,
+  "comment": "Updated review comment"
+}
+
+Success Response (200):
+{
+  "success": true,
+  "message": "Review updated successfully",
+  "data": {
+    "review_id": 789,
+    "rating": 4,
+    "comment": "Updated review comment",
+    "updated_at": "2025-10-01T18:00:00Z"
+  }
+}
+
+================================================================================
+                                 TAGS APIS
+================================================================================
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                               GET ALL TAGS                                    │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+API Name: Get All Tags
+URL: GET /tags
+Request Body: None
+
+Success Response (200):
+{
+  "success": true,
+  "data": [
+    {
+      "tag_id": 1,
+      "name": "electronics",
+      "description": "Electronic devices and gadgets",
+      "usage_count": 156,
+      "created_at": "2025-09-01T10:00:00Z"
+    },
+    {
+      "tag_id": 2,
+      "name": "clothing",
+      "description": "Clothing and accessories",
+      "usage_count": 89,
+      "created_at": "2025-09-01T10:00:00Z"
+    }
+  ]
+}
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                             GET POPULAR TAGS                                  │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+API Name: Get Popular Tags
+URL: GET /tags/popular
+Query Parameters:
+  - limit: Number of tags to return (optional, default: 10)
+Request Body: None
+
+Success Response (200):
+{
+  "success": true,
+  "data": [
+    {
+      "tag_id": 1,
+      "name": "electronics",
+      "usage_count": 156
+    },
+    {
+      "tag_id": 3,
+      "name": "jewelry",
+      "usage_count": 134
+    }
+  ]
+}
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                                CREATE TAG                                     │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+API Name: Create Tag
+URL: POST /tags
+Headers: Authorization: Bearer <jwt_token>
+Request Body:
+{
+  "name": "electronics",
+  "description": "Electronic devices and gadgets"
+}
+
+Success Response (201):
+{
+  "success": true,
+  "message": "Tag created successfully",
+  "data": {
+    "tag_id": 15,
+    "name": "electronics",
+    "description": "Electronic devices and gadgets",
+    "usage_count": 0,
+    "created_at": "2025-10-01T18:30:00Z"
+  }
+}
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                                SEARCH TAGS                                    │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+API Name: Search Tags
+URL: GET /tags/search
+Query Parameters: q (search query)
+Request Body: None
+
+Success Response (200):
+{
+  "success": true,
+  "data": [
+    {
+      "tag_id": 1,
+      "name": "electronics",
+      "description": "Electronic devices and gadgets",
+      "usage_count": 156
+    }
+  ]
+}
+
+================================================================================
+                              CATEGORIES APIS
+================================================================================
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                            GET ALL CATEGORIES                                 │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+API Name: Get All Categories
+URL: GET /category
+Request Body: None
+
+Success Response (200):
+{
+  "success": true,
+  "data": [
+    {
+      "category_id": 1,
+      "name": "Electronics",
+      "description": "Electronic devices and gadgets",
+      "item_count": 156,
+      "created_at": "2025-09-01T10:00:00Z"
+    },
+    {
+      "category_id": 2,
+      "name": "Clothing",
+      "description": "Clothing and accessories",
+      "item_count": 89,
+      "created_at": "2025-09-01T10:00:00Z"
+    }
+  ]
+}
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                              CREATE CATEGORY                                  │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+API Name: Create Category
+URL: POST /category
+Headers: Authorization: Bearer <jwt_token> (Admin only)
+Request Body:
+{
+  "name": "Electronics",
+  "description": "Electronic devices and gadgets"
+}
+
+Success Response (201):
+{
+  "success": true,
+  "message": "Category created successfully",
+  "data": {
+    "category_id": 10,
+    "name": "Electronics",
+    "description": "Electronic devices and gadgets",
+    "item_count": 0,
+    "created_at": "2025-10-01T19:00:00Z"
+  }
+}
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                              UPDATE CATEGORY                                  │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+API Name: Update Category
+URL: PUT /category/:category_id
+Headers: Authorization: Bearer <jwt_token> (Admin only)
+Request Body:
+{
+  "name": "Updated Category Name",
+  "description": "Updated description"
+}
+
+Success Response (200):
+{
+  "success": true,
+  "message": "Category updated successfully",
+  "data": {
+    "category_id": 10,
+    "name": "Updated Category Name",
+    "description": "Updated description",
+    "updated_at": "2025-10-01T19:30:00Z"
+  }
+}
+
+================================================================================
+                               ANALYTICS APIS
+================================================================================
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                             GET USER ANALYTICS                                │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+API Name: Get User Analytics
+URL: GET /analytics/user
+Headers: Authorization: Bearer <jwt_token>
+Request Body: None
+
+Success Response (200):
+{
+  "success": true,
+  "data": {
+    "user_stats": {
+      "total_items_posted": 25,
+      "lost_items": 15,
+      "found_items": 10,
+      "successful_returns": 8,
+      "active_conversations": 5,
+      "trust_score": 4.7,
+      "total_reviews": 12
+    },
+    "monthly_activity": [
+      {
+        "month": "2025-09",
+        "items_posted": 8,
+        "messages_sent": 45,
+        "successful_returns": 2
+      }
+    ],
+    "item_categories": [
+      {
+        "category": "Electronics",
+        "count": 12
+      },
+      {
+        "category": "Clothing",
+        "count": 8
+      }
+    ]
+  }
+}
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                             GET ITEM ANALYTICS                                │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+API Name: Get Item Analytics
+URL: GET /analytics/items/:item_id
+Headers: Authorization: Bearer <jwt_token>
+Request Body: None
+
+Success Response (200):
+{
+  "success": true,
+  "data": {
+    "item_id": 456,
+    "views": {
+      "total": 125,
+      "unique": 87,
+      "daily_views": [
+        {"date": "2025-10-01", "views": 15},
+        {"date": "2025-09-30", "views": 22}
+      ]
+    },
+    "contacts": {
+      "total": 8,
+      "converted_to_conversations": 5
+    },
+    "geographical_reach": {
+      "cities": ["New York", "Brooklyn", "Queens"],
+      "total_radius": "15km"
+    },
+    "performance_score": 8.5
+  }
+}
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                           GET SYSTEM ANALYTICS (ADMIN)                        │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+API Name: Get System Analytics (Admin)
+URL: GET /analytics/system
+Headers: Authorization: Bearer <admin_jwt_token>
+Request Body: None
+
+Success Response (200):
+{
+  "success": true,
+  "data": {
+    "total_users": 1245,
+    "active_users_monthly": 856,
+    "total_items": 3567,
+    "successful_returns": 2145,
+    "return_rate": 0.68,
+    "popular_categories": [
+      {"name": "Electronics", "count": 890},
+      {"name": "Clothing", "count": 567}
+    ],
+    "geographical_distribution": [
+      {"city": "New York", "users": 456, "items": 1234},
+      {"city": "Los Angeles", "users": 234, "items": 678}
+    ],
+    "monthly_growth": [
+      {"month": "2025-09", "new_users": 123, "new_items": 456},
+      {"month": "2025-08", "new_users": 98, "new_items": 378}
+    ]
+  }
+}
+
+Error Response (403):
+{
+  "success": false,
+  "message": "Admin access required"
+}
+
+================================================================================
+                             HEALTH CHECK APIS
+================================================================================
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                               HEALTH CHECK                                    │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+API Name: Health Check
+URL: GET /health
+Request Body: None
+
+Success Response (200):
+{
+  "success": true,
+  "status": "healthy",
+  "timestamp": "2025-10-01T20:00:00Z",
+  "uptime": "2d 15h 30m",
+  "version": "2.0.0"
+}
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                           DATABASE HEALTH CHECK                               │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+API Name: Database Health Check
+URL: GET /health/database
+Request Body: None
+
+Success Response (200):
+{
+  "success": true,
+  "database": {
+    "status": "connected",
+    "response_time": "45ms",
+    "connections": {
+      "active": 12,
+      "idle": 8,
+      "max": 50
+    }
+  },
+  "redis": {
+    "status": "connected",
+    "response_time": "2ms"
+  }
+}
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                                API STATUS                                     │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+API Name: API Status
+URL: GET /
+Request Body: None
+
+Success Response (200):
+{
+  "message": "🎉 Enhanced LostFound API is running!",
+  "version": "2.0.0",
+  "features": [
+    "User Management & Authentication",
+    "Item Management with 'returned' status",
+    "Real-time Messaging System",
+    "Smart Notifications",
+    "Advanced Search & Matching",
+    "Trust & Review System",
+    "Flexible Tagging System",
+    "Comprehensive Analytics"
+  ],
+  "endpoints": {
+    "core": ["/users", "/items", "/category"],
+    "messaging": ["/messaging"],
+    "notifications": ["/notifications"],
+    "reviews": ["/reviews"],
+    "search": ["/search"],
+    "tags": ["/tags"],
+    "analytics": ["/analytics"]
+  }
+}
+
+================================================================================
+                               CONTACT APIS
+================================================================================
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                            SEND CONTACT MESSAGE                               │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+API Name: Send Contact Message
+URL: POST /contact
+Request Body:
+{
+  "name": "John Doe",
+  "email": "john@example.com",
+  "subject": "Support Request",
+  "message": "I need help with my account"
+}
+
+Success Response (200):
+{
+  "success": true,
+  "message": "Contact message sent successfully",
+  "data": {
+    "ticket_id": "TICKET-2025-001234",
+    "estimated_response": "24 hours"
+  }
+}
+
+================================================================================
+                            GOOGLE AUTH APIS
+================================================================================
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                             GOOGLE OAUTH LOGIN                                │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+API Name: Google OAuth Login
+URL: GET /auth/google
+Request Body: None (redirects to Google)
+
+Response: Redirects to Google OAuth consent screen
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                           GOOGLE OAUTH CALLBACK                               │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+API Name: Google OAuth Callback
+URL: GET /auth/google/callback
+Request Body: None (handled by Google)
+
+Success Response: Redirects to frontend with success data
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                             GOOGLE AUTH SUCCESS                               │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+API Name: Google Auth Success
+URL: GET /auth/success
+Request Body: None
+
+Success Response (200):
+{
+  "success": true,
+  "user": {
+    "user_id": 123,
+    "name": "John Doe",
+    "email": "john@gmail.com",
+    "profile_picture_url": "https://lh3.googleusercontent.com/..."
+  },
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+
+================================================================================
+                             COMMON ERROR RESPONSES
+================================================================================
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                              ERROR RESPONSES                                  │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+400 Bad Request:
+{
+  "success": false,
+  "message": "Invalid request data",
+  "errors": {
+    "email": "Invalid email format",
+    "password": "Password must be at least 8 characters"
+  }
+}
+
+401 Unauthorized:
+{
+  "success": false,
+  "message": "Unauthorized - Invalid or expired token"
+}
+
+403 Forbidden:
+{
+  "success": false,
+  "message": "Access denied - Insufficient permissions"
+}
+
+404 Not Found:
+{
+  "success": false,
+  "message": "Resource not found"
+}
+
+429 Too Many Requests:
+{
+  "success": false,
+  "message": "Rate limit exceeded",
+  "retry_after": 60
+}
+
+500 Internal Server Error:
+{
+  "success": false,
+  "message": "Internal server error",
+  "error_id": "ERR-2025-001234"
+}
+
+================================================================================
+                               IMPORTANT NOTES
+================================================================================
+
+🔐 AUTHENTICATION:
+• Include JWT token in Authorization header: "Bearer <token>"
+• Tokens expire after 24 hours - refresh by logging in again
+• Some endpoints require admin privileges
+
+📝 REQUEST HEADERS:
+• Content-Type: application/json (for JSON requests)
+• Content-Type: multipart/form-data (for file uploads)
+• Authorization: Bearer <jwt_token> (for protected routes)
+
+📊 RESPONSE FORMAT:
+• All responses include "success" boolean field
+• Success responses have "data" field with results
+• Error responses have "message" field with error description
+
+🔄 PAGINATION:
+• Use "page" and "limit" query parameters
+• Default limit is usually 10 items
+• Response includes pagination metadata
+
+📍 RATE LIMITING:
+• API requests are rate limited per user
+• Limits vary by endpoint type
+• Exceeded limits return 429 status
+
+🌐 ENVIRONMENT:
+• Development: http://localhost:4500
+• Production: Use HTTPS and update base URL
+
+================================================================================
